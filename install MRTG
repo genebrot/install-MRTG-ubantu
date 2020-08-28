@@ -1,0 +1,89 @@
+MRTG (Multi Router Traffic Grapher)是一個用perl編寫的開源工具，用於監視和測量網絡鏈接上的流量使用情況，並以圖形形式顯示數據。此工具幫助我們跟踪和排除故障網絡異常
+比如在非正常時間出現網絡流量峰值。
+
+我們開始安裝需要的工具
+$ sudo apt-get install apache2
+$ sudo apt-get install snmpd snmp
+
+現在編輯snmpd.conf
+$ sudo vim /etc/snmp/snmpd.conf
+找到下面的一行，去掉前面的“#”，保存退出 
+#rocommunity public localhost
+
+重新啟動snmpd服務
+$ sudo systemctl restart snmpd
+
+安裝mrtg，請使用下面的命令
+$  sudo apt-get install mrtg
+
+現在我們需要配置mrtg
+$ sudo su     #進入root
+# cd
+# mkdir /var/www/mrtg
+# chown -R www-data:www-data /var/www/mrtg
+編輯 /etc/mrtg.conf去設定工作目錄
+# cat /etc/mrtg.cfg | grep -v "^#"
+會看到下面的輸出
+WorkDir: /var/www/mrtg
+WriteExpires: Yes
+Title[^]: Traffic Analysis for
+
+# cfgmaker public@localhost > /etc/mrtg.cfg
+會看到下面的輸出：
+--base: Get Device Info on public@localhost:
+--base: Vendor Id: Unknown Vendor - 1.3.6.1.4.1.8072.3.2.10
+--base: Populating confcache
+--base: Get Interface Info
+--base: Walking ifIndex
+--snpd: public@localhost: -> 1 -> ifIndex = 1
+--snpd: public@localhost: -> 2 -> ifIndex = 2
+--base: Walking ifType
+--snpd: public@localhost: -> 1 -> ifType = 24
+--snpd: public@localhost: -> 2 -> ifType = 6
+--base: Walking ifAdminStatus
+--snpd: public@localhost: -> 1 -> ifAdminStatus = 1
+--snpd: public@localhost: -> 2 -> ifAdminStatus = 1
+--base: Walking ifOperStatus
+--snpd: public@localhost: -> 1 -> ifOperStatus = 1
+--snpd: public@localhost: -> 2 -> ifOperStatus = 1
+--base: Walking ifMtu
+--snpd: public@localhost: -> 1 -> ifMtu = 65536
+--snpd: public@localhost: -> 2 -> ifMtu = 1500
+--base: Walking ifSpeed
+--snpd: public@localhost: -> 1 -> ifSpeed = 10000000
+--snpd: public@localhost: -> 2 -> ifSpeed = 0
+
+
+# ls /var/www/mrtg/
+使用上面的命令你過後，你會看到下面這些文件
+index.html               localhost_ens33-month.png  mrtg-l.png
+localhost_ens33-day.png  localhost_ens33.old        mrtg-m.png
+localhost_ens33.html     localhost_ens33-week.png   mrtg-r.png
+localhost_ens33.log      localhost_ens33-year.png
+
+
+
+為web服務創建索引文件
+# indexmaker /etc/mrtg.cfg > /var/www/mrtg/index.html
+# vim /etc/apache2/sites-available/mrtg.conf
+請複製下面內容，然後刪除每一行前面的<200b>
+
+Alias /mrtg "/var/www/mrtg/"
+​<Directory "/var/www/mrtg/">
+ ​Options None
+​ AllowOverride None
+​ Require all granted
+​</Directory>
+
+重啟相關服務
+# sudo a2ensite mrtg
+# systemctl reload apache2
+
+
+http://你的IP地址/mrtg
+
+Congratulations on the successful installation of the MRGT.
+If it helps you, please share!
+恭喜各位成功安裝了mrgt。如果對你有幫助請分享！
+
+
